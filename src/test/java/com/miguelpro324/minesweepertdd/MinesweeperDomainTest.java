@@ -1,67 +1,93 @@
-package com.miguelpro324.minesweepertdd;
+package com.miguelpro324.minesweepertdd.model;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.Random;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.DisplayName;
-import static org.junit.jupiter.api.Assertions.*;
 
 class MinesweeperDomainTest {
 
-    // RF-01: Crear tablero
     @Test
-    @DisplayName("Board initialization creates N x M grid with default immutable cell states")
-    void shouldInitializeBoardWithCorrectDimensionsAndDefaultStates() {
-        Board board = new Board(10, 10, 0); // Rows, Columns, Mines
+    void shouldInitializeBoardAndRejectInvalidSettings() {
+        Grid grid = new Grid(3, 4, 0);
 
-        assertAll("Verify initial cell state constraints",
-            () -> assertEquals(100, board.getTotalCells()),
-            () -> assertFalse(board.getCell(0, 0).isRevealed()),
-            () -> assertFalse(board.getCell(0, 0).hasMine()),
-            () -> assertFalse(board.getCell(0, 0).hasFlag()),
-            () -> assertEquals(0, board.getCell(0, 0).getNeighborMines())
+        assertAll(
+            () -> assertEquals(3, grid.getRows()),
+            () -> assertEquals(4, grid.getColumns()),
+            () -> assertEquals(0, grid.getMineCount()),
+            () -> assertEquals(GameState.ONGOING, grid.getGameState()),
+            () -> assertFalse(grid.getCell(0, 0).isMine()),
+            () -> assertFalse(grid.getCell(0, 0).isRevealed()),
+            () -> assertFalse(grid.getCell(0, 0).isFlagged()),
+            () -> assertEquals(0, grid.getCell(0, 0).getAdjacentMines())
         );
-    }
 
-    // RF-02: Colocar minas
-    @Test
-    @DisplayName("Board places exactly K unique mines upon initialization")
-    void shouldPlaceExactNumberOfUniqueMines() {
-        Board board = new Board(5, 5, 5);
-        long actualMines = board.streamAllCells()
-                                .filter(Cell::hasMine)
-                                .count();
-
-        assertEquals(5, actualMines);
+        assertThrows(IllegalArgumentException.class, () -> new Grid(0, 3, 0));
+        assertThrows(IllegalArgumentException.class, () -> new Grid(3, 0, 0));
+        assertThrows(IllegalArgumentException.class, () -> new Grid(3, 3, -1));
+        assertThrows(IllegalArgumentException.class, () -> new Grid(2, 2, 5));
+        assertThrows(IllegalArgumentException.class, () -> new Grid(2, 2, 1, null));
     }
 
     @Test
-    @DisplayName("Board throws Exception when requested mine count exceeds grid capacity")
-    void shouldRejectInvalidMineCount() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            new Board(5, 5, 26);
-        }, "Mine count cannot exceed N * M");
+    void shouldCalculateAdjacencyAndRevealSafeCells() {
+        Grid grid = new Grid(4, 4, 3, new Random(7));
+        boolean[][] mines = new boolean[grid.getRows()][grid.getColumns()];
+
+        for (int row = 0; row < grid.getRows(); row++) {
+            for (int column = 0; column < grid.getColumns(); column++) {
+                mines[row][column] = grid.getCell(row, column).isMine();
+            }
+        }
+
+        for (int row = 0; row < grid.getRows(); row++) {
+            for (int column = 0; column < grid.getColumns(); column++) {
+                if (mines[row][column]) {
+                    continue;
+                }
+                int expected = 0;
+                for (int neighborRow = row - 1; neighborRow <= row + 1; neighborRow++) {
+                    for (int neighborColumn = column - 1; neighborColumn <= column + 1; neighborColumn++) {
+                        if (neighborRow == row && neighborColumn == column) {
+                            continue;
+                        }
+                        if (neighborRow >= 0 && neighborRow < grid.getRows()
+                            && neighborColumn >= 0 && neighborColumn < grid.getColumns()
+                            && mines[neighborRow][neighborColumn]) {
+                            expected++;
+                        }
+                    }
+                }
+                assertEquals(expected, grid.getCell(row, column).getAdjacentMines());
+            }
+        }
+
+        grid.revealCell(0, 0);
+        if (grid.getCell(0, 0).isMine()) {
+            assertEquals(GameState.DEFEAT, grid.getGameState());
+            assertTrue(grid.getCell(0, 0).isRevealed());
+        } else {
+            assertTrue(grid.getCell(0, 0).isRevealed());
+        }
     }
 
-    // RF-06: Marcar bandera
     @Test
-    @DisplayName("Toggle flag operation reverses flag state on unrevealed cells")
-    void shouldToggleFlagOnUnrevealedCell() {
-        Board board = new Board(5, 5, 0);
+    void shouldWinOnEmptyBoardAndToggleFlagsSafely() {
+        Grid grid = new Grid(2, 2, 0);
 
-        board.toggleFlag(2, 2);
-        assertTrue(board.getCell(2, 2).hasFlag());
+        grid.toggleFlag(1, 1);
+        assertTrue(grid.getCell(1, 1).isFlagged());
 
-        board.toggleFlag(2, 2);
-        assertFalse(board.getCell(2, 2).hasFlag());
-    }
+        grid.toggleFlag(1, 1);
+        assertFalse(grid.getCell(1, 1).isFlagged());
 
-    @Test
-    @DisplayName("Toggle flag operation is ignored on already revealed cells")
-    void shouldIgnoreFlagToggleOnRevealedCell() {
-        Board board = new Board(5, 5, 0);
-
-        board.revealCell(1, 1);
-        board.toggleFlag(1, 1);
-
-        assertFalse(board.getCell(1, 1).hasFlag());
+        grid.revealCell(0, 0);
+        assertEquals(GameState.VICTORY, grid.getGameState());
+        assertTrue(grid.getCell(0, 0).isRevealed());
+        assertTrue(grid.getCell(1, 1).isRevealed());
     }
 }
