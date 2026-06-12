@@ -36,7 +36,7 @@ public class ConsoleView implements GameView {
             out.printf("%2d ", row + 1);
             for (int column = 0; column < grid.getColumns(); column++) {
                 out.print(renderCell(grid, row, column));
-                out.print(' ');
+                out.print("  ");
             }
             out.println();
         }
