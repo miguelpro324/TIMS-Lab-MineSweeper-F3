@@ -44,6 +44,47 @@ class AppTest {
         assertEquals(GameState.ONGOING, grid.getGameState());
     }
 
+    @Test
+    void shouldToggleFlagAndBlockRevealUntilUnflagged() {
+        Grid grid = new Grid(2, 2, 0);
+        FakeView view = new FakeView();
+        GameController controller = new GameController(grid, view, new FakeInputHandler());
+
+        controller.handleCommand("flag 1 1");
+        controller.handleCommand("reveal 1 1");
+        controller.handleCommand("flag 1 1");
+        controller.handleCommand("reveal 1 1");
+
+        assertTrue(grid.getCell(0, 0).isRevealed());
+        assertEquals(GameState.VICTORY, grid.getGameState());
+        assertTrue(view.messages.contains("Cell is flagged. Unflag it before revealing."));
+    }
+
+    @Test
+    void shouldShowHelpAndRejectUnknownCommands() {
+        Grid grid = new Grid(2, 2, 0);
+        FakeView view = new FakeView();
+        GameController controller = new GameController(grid, view, new FakeInputHandler());
+
+        controller.handleCommand("help");
+        controller.handleCommand("dance");
+
+        assertTrue(view.messages.contains("Commands: reveal <row> <col>, flag <row> <col>, quit"));
+        assertTrue(view.messages.contains("Expected format: dance <row> <col>."));
+    }
+
+    @Test
+    void shouldMarkExitRequestedWhenQuitIsReceived() {
+        Grid grid = new Grid(2, 2, 0);
+        FakeView view = new FakeView();
+        GameController controller = new GameController(grid, view, new FakeInputHandler());
+
+        controller.handleCommand("quit");
+        controller.start();
+
+        assertTrue(view.messages.contains("Exiting game."));
+    }
+
     private static final class FakeView implements GameView {
         private final List<String> messages = new ArrayList<>();
         private final List<GameState> states = new ArrayList<>();

@@ -90,4 +90,65 @@ class MinesweeperDomainTest {
         assertTrue(grid.getCell(0, 0).isRevealed());
         assertTrue(grid.getCell(1, 1).isRevealed());
     }
+
+    @Test
+    void shouldRevealMineAndSwitchToDefeat() {
+        Grid grid = new Grid(3, 3, 2, new Random(11));
+        int mineRow = -1;
+        int mineColumn = -1;
+
+        for (int row = 0; row < grid.getRows(); row++) {
+            for (int column = 0; column < grid.getColumns(); column++) {
+                if (grid.getCell(row, column).isMine()) {
+                    mineRow = row;
+                    mineColumn = column;
+                    break;
+                }
+            }
+            if (mineRow >= 0) {
+                break;
+            }
+        }
+
+        grid.revealCell(mineRow, mineColumn);
+
+        assertEquals(GameState.DEFEAT, grid.getGameState());
+        assertTrue(grid.getCell(mineRow, mineColumn).isRevealed());
+
+        boolean revealedMineFound = false;
+        for (int row = 0; row < grid.getRows(); row++) {
+            for (int column = 0; column < grid.getColumns(); column++) {
+                if (grid.getCell(row, column).isMine()) {
+                    revealedMineFound |= grid.getCell(row, column).isRevealed();
+                }
+            }
+        }
+        assertTrue(revealedMineFound);
+    }
+
+    @Test
+    void shouldIgnoreRevealOnFlaggedCell() {
+        Grid grid = new Grid(2, 2, 0);
+
+        grid.toggleFlag(0, 1);
+        grid.revealCell(0, 1);
+
+        assertTrue(grid.getCell(0, 1).isFlagged());
+        assertFalse(grid.getCell(0, 1).isRevealed());
+        assertEquals(GameState.ONGOING, grid.getGameState());
+    }
+
+    @Test
+    void shouldResetBoardStateWhenReinitialized() {
+        Grid grid = new Grid(2, 2, 0);
+        grid.revealCell(0, 0);
+        assertEquals(GameState.VICTORY, grid.getGameState());
+
+        grid.initializeCells();
+
+        assertEquals(GameState.ONGOING, grid.getGameState());
+        assertFalse(grid.getCell(0, 0).isRevealed());
+        assertFalse(grid.getCell(0, 0).isFlagged());
+        assertEquals(0, grid.getCell(0, 0).getAdjacentMines());
+    }
 }
