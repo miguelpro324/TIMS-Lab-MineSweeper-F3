@@ -29,3 +29,15 @@ java -cp target/classes com.miguelpro324.minesweepertdd.MineSweeperApplication -
 ```bash
 mvn clean test -q
 ```
+
+## Run coverage report
+
+```bash
+mvn clean verify
+```
+
+The JaCoCo report will be available at:
+
+```bash
+target/site/jacoco/index.html
+```

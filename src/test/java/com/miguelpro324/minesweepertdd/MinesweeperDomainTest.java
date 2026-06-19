@@ -47,6 +47,7 @@ class MinesweeperDomainTest {
         for (int row = 0; row < grid.getRows(); row++) {
             for (int column = 0; column < grid.getColumns(); column++) {
                 if (mines[row][column]) {
+                    assertEquals(0, grid.getCell(row, column).getAdjacentMines());
                     continue;
                 }
                 int expected = 0;
