@@ -47,13 +47,17 @@ class SwingGameViewTest {
         assertTrue(commands.contains("reveal 1 1"));
         assertTrue(commands.contains("flag 1 2"));
         assertEquals("State: ONGOING", holder[0].getStateLabel().getText());
+        assertEquals("Score: 0", holder[0].getScoreLabel().getText());
         assertTrue(holder[0].getFrame().isDisplayable());
 
+        grid.revealCell(0, 0);
         SwingUtilities.invokeAndWait(() -> {
+            holder[0].render(grid);
             holder[0].showMessage("Hello GUI");
             holder[0].showGameState(GameState.VICTORY);
         });
 
+        assertEquals("Score: 516", holder[0].getScoreLabel().getText());
         assertTrue(holder[0].getMessageArea().getText().contains("Hello GUI"));
         assertEquals("State: VICTORY", holder[0].getStateLabel().getText());
         assertFalse(holder[0].getCellButton(0, 0).isEnabled());

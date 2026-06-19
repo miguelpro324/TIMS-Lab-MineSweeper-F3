@@ -27,6 +27,7 @@ public class ConsoleView implements GameView {
         if (grid == null) {
             throw new IllegalArgumentException("Grid cannot be null.");
         }
+        out.println("Score: " + grid.getScore());
         out.print("   ");
         for (int column = 1; column <= grid.getColumns(); column++) {
             out.printf("%2d ", column);

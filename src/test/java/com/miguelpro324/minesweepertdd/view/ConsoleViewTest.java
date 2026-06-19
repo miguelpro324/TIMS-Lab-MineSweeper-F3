@@ -45,6 +45,7 @@ class ConsoleViewTest {
         view.showGameState(GameState.ONGOING);
 
         String rendered = output.toString();
+        assertTrue(rendered.contains("Score: 10"));
         assertTrue(rendered.contains(Integer.toString(grid.getCell(numberRow, numberColumn).getAdjacentMines())));
         assertTrue(rendered.contains("F"));
         assertTrue(rendered.contains("Ready"));

@@ -34,6 +34,7 @@ public class SwingGameView implements GameView {
     private static final Dimension CELL_SIZE = new Dimension(42, 42);
 
     private final JFrame frame;
+    private final JLabel scoreLabel;
     private final JPanel boardPanel;
     private final JLabel stateLabel;
     private final JTextArea messageArea;
@@ -45,6 +46,7 @@ public class SwingGameView implements GameView {
 
     public SwingGameView() {
         this.frame = new JFrame("MineSweeper");
+        this.scoreLabel = new JLabel("Score: 0");
         this.boardPanel = new JPanel(new GridLayout(0, 1, 4, 4));
         this.stateLabel = new JLabel("State: ONGOING");
         this.messageArea = new JTextArea(4, 24);
@@ -74,6 +76,7 @@ public class SwingGameView implements GameView {
         runOnEdt(() -> {
             boardPanel.removeAll();
             boardPanel.setLayout(new GridLayout(grid.getRows(), grid.getColumns(), 4, 4));
+            scoreLabel.setText("Score: " + grid.getScore());
             cellButtons.clear();
             for (int row = 0; row < grid.getRows(); row++) {
                 for (int column = 0; column < grid.getColumns(); column++) {
@@ -121,6 +124,10 @@ public class SwingGameView implements GameView {
         return stateLabel;
     }
 
+    JLabel getScoreLabel() {
+        return scoreLabel;
+    }
+
     JTextArea getMessageArea() {
         return messageArea;
     }
@@ -136,7 +143,10 @@ public class SwingGameView implements GameView {
     private void buildUi() {
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setLayout(new BorderLayout(8, 8));
-        frame.add(stateLabel, BorderLayout.NORTH);
+        JPanel header = new JPanel(new GridLayout(1, 2, 8, 8));
+        header.add(stateLabel);
+        header.add(scoreLabel);
+        frame.add(header, BorderLayout.NORTH);
         boardPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
         frame.add(boardPanel, BorderLayout.CENTER);
 

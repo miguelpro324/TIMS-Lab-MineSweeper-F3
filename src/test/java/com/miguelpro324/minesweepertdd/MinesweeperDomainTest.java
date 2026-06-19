@@ -87,6 +87,7 @@ class MinesweeperDomainTest {
 
         grid.revealCell(0, 0);
         assertEquals(GameState.VICTORY, grid.getGameState());
+        assertEquals(516, grid.getScore());
         assertTrue(grid.getCell(0, 0).isRevealed());
         assertTrue(grid.getCell(1, 1).isRevealed());
     }
@@ -113,6 +114,7 @@ class MinesweeperDomainTest {
         grid.revealCell(mineRow, mineColumn);
 
         assertEquals(GameState.DEFEAT, grid.getGameState());
+        assertEquals(0, grid.getScore());
         assertTrue(grid.getCell(mineRow, mineColumn).isRevealed());
 
         boolean revealedMineFound = false;
@@ -143,12 +145,40 @@ class MinesweeperDomainTest {
         Grid grid = new Grid(2, 2, 0);
         grid.revealCell(0, 0);
         assertEquals(GameState.VICTORY, grid.getGameState());
+        assertEquals(516, grid.getScore());
 
         grid.initializeCells();
 
         assertEquals(GameState.ONGOING, grid.getGameState());
+        assertEquals(0, grid.getScore());
         assertFalse(grid.getCell(0, 0).isRevealed());
         assertFalse(grid.getCell(0, 0).isFlagged());
         assertEquals(0, grid.getCell(0, 0).getAdjacentMines());
+    }
+
+    @Test
+    void shouldAwardPointsForDirectRevealOnNumberCell() {
+        Grid grid = new Grid(3, 3, 1, new Random(7));
+
+        int numberRow = -1;
+        int numberColumn = -1;
+        for (int row = 0; row < grid.getRows(); row++) {
+            for (int column = 0; column < grid.getColumns(); column++) {
+                if (!grid.getCell(row, column).isMine() && grid.getCell(row, column).getAdjacentMines() > 0) {
+                    numberRow = row;
+                    numberColumn = column;
+                    break;
+                }
+            }
+            if (numberRow >= 0) {
+                break;
+            }
+        }
+
+        assertTrue(numberRow >= 0);
+        grid.revealCell(numberRow, numberColumn);
+
+        assertEquals(10, grid.getScore());
+        assertEquals(GameState.ONGOING, grid.getGameState());
     }
 }

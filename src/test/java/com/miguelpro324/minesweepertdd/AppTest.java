@@ -24,6 +24,7 @@ class AppTest {
         controller.start();
 
         assertEquals(GameState.VICTORY, grid.getGameState());
+        assertEquals(510, grid.getScore());
         assertTrue(view.messages.contains("You cleared the board."));
         assertTrue(view.renderCount > 0);
     }
@@ -57,6 +58,7 @@ class AppTest {
 
         assertTrue(grid.getCell(0, 0).isRevealed());
         assertEquals(GameState.VICTORY, grid.getGameState());
+        assertEquals(516, grid.getScore());
         assertTrue(view.messages.contains("Cell is flagged. Unflag it before revealing."));
     }
 

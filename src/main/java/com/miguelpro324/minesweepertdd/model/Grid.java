@@ -8,6 +8,10 @@ import java.util.Random;
  */
 public class Grid {
 
+    private static final int USER_REVEAL_POINTS = 10;
+    private static final int CASCADE_REVEAL_POINTS = 2;
+    private static final int VICTORY_BONUS_POINTS = 500;
+
     private final int rows;
     private final int columns;
     private final int mineCount;
@@ -16,6 +20,7 @@ public class Grid {
     private Cell[][] cells;
     private GameState gameState;
     private int revealedSafeCells;
+    private int score;
 
     public Grid(int rows, int columns, int mineCount) {
         this(rows, columns, mineCount, new Random());
@@ -62,6 +67,10 @@ public class Grid {
         return gameState;
     }
 
+    public int getScore() {
+        return score;
+    }
+
     public Cell getCell(int row, int column) {
         validateCoordinates(row, column);
         return cells[row][column];
@@ -75,6 +84,7 @@ public class Grid {
             }
         }
         revealedSafeCells = 0;
+        score = 0;
         gameState = GameState.ONGOING;
     }
 
@@ -107,6 +117,10 @@ public class Grid {
     }
 
     public void revealCell(int row, int column) {
+        revealCellInternal(row, column, true);
+    }
+
+    private void revealCellInternal(int row, int column, boolean userInitiated) {
         validateCoordinates(row, column);
         if (gameState != GameState.ONGOING) {
             return;
@@ -122,18 +136,19 @@ public class Grid {
             return;
         }
 
-        ArrayDeque<int[]> stack = new ArrayDeque<>();
-        stack.push(new int[] {row, column});
+        ArrayDeque<RevealStep> stack = new ArrayDeque<>();
+        stack.push(new RevealStep(row, column, userInitiated));
         while (!stack.isEmpty()) {
-            int[] current = stack.pop();
-            int currentRow = current[0];
-            int currentColumn = current[1];
+            RevealStep current = stack.pop();
+            int currentRow = current.row();
+            int currentColumn = current.column();
             Cell cell = cells[currentRow][currentColumn];
             if (cell.isRevealed() || cell.isFlagged()) {
                 continue;
             }
             cell.setRevealed(true);
             revealedSafeCells++;
+            score += current.userInitiated() ? USER_REVEAL_POINTS : CASCADE_REVEAL_POINTS;
             if (cell.getAdjacentMines() != 0) {
                 continue;
             }
@@ -145,7 +160,7 @@ public class Grid {
                     if (isInside(neighborRow, neighborColumn)) {
                         Cell neighbor = cells[neighborRow][neighborColumn];
                         if (!neighbor.isRevealed() && !neighbor.isMine()) {
-                            stack.push(new int[] {neighborRow, neighborColumn});
+                            stack.push(new RevealStep(neighborRow, neighborColumn, false));
                         }
                     }
                 }
@@ -153,6 +168,7 @@ public class Grid {
         }
 
         if (revealedSafeCells == rows * columns - mineCount) {
+            score += VICTORY_BONUS_POINTS;
             gameState = GameState.VICTORY;
         }
     }
@@ -208,5 +224,8 @@ public class Grid {
         if (cells == null) {
             throw new IllegalStateException("Grid has not been initialized.");
         }
+    }
+
+    private record RevealStep(int row, int column, boolean userInitiated) {
     }
 }
